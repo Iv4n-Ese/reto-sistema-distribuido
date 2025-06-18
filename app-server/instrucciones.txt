@@ -1,0 +1,18 @@
+INSTRUCCIONES DEBIAN
+
+1. posicionarse en la carpeta /py
+    cd py
+
+2. Crear el entorno virtual (instalar virtualenv si no se tiene)
+    python -m venv venv
+
+3. Activar el entorno virtual (importante para que sólo instale las dependencias en el entorno y no la computadora globalmente).
+Sabrán que está activo si en la terminal tienen un "(venv)"
+    source ./env/Scripts/activate
+
+4. Instalar las dependencias tomara las versiones actuales
+    pip install -r requerimientos.txt
+
+NOTAS:
+Para salir del entorno virtual ejecutar el siguiente comando o cerrar la terminal
+    deactivate
