@@ -1,0 +1,82 @@
+INSTRUCCIONES DEBIAN
+
+# Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar dependencias
+sudo apt install -y ca-certificates curl gnupg
+
+# Agregar clave GPG de Docker
+	* sudo install -m 0755 -d /etc/apt/keyrings
+	* curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.asc
+
+# Agregar repositorio de Docker
+echo \
+  "deb [arch=$(dpkg --print-architecture) \
+  signed-by=/etc/apt/keyrings/docker.asc] \
+  https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Actualizar sistema
+	* sudo apt update
+	* sudo apt install -y docker.io
+# Verifica que esté instalado:
+	* docker --version
+
+# Habilita y arranca Docker:
+	* sudo systemctl enable docker
+	* sudo systemctl start docker
+
+# Agrega tu usuario al grupo docker (opcional)
+sudo usermod -aG docker $USER
+
+# Crear esquema de base de datos con Docker
+	* mkdir ~/postgres-db && cd ~/postgres-db
+	* nano docker-compose.yml o con 
+	# vim docker-compose.yml
+
+"""""""""""""""""""""""""""""""""""""""""""""""""
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: db-server
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: personas_db
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+"""""""""""""""""""""""""""""""""""""""""""""""""
+
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: db-server
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: personas_db
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+
+# Crea el directorio init y dentro un archivo SQL para el esquema
+mkdir init
+nano init/init.sql
