@@ -1,0 +1,93 @@
+Instalar CoreDNS
+Desde Ubuntu/Debian en la VM:
+	sudo apt update
+	sudo apt install golang git -y
+	git clone https://github.com/coredns/coredns.git
+	cd coredns
+	go build
+	sudo mv coredns /usr/local/bin/
+
+Configurar CoreDNS
+	archivo Corefile	
+		. {
+			forward . 8.8.8.8 1.1.1.1
+			log
+			errors
+		}
+
+Host
+. {
+    hosts {
+        192.168.56.101 db-server.local
+        192.168.56.102 app-server.local
+        fallthrough
+    }
+    forward . 8.8.8.8
+    log
+}
+
+Ejecutar CoreDNS
+	sudo coredns -conf Corefile
+
+	db.unam.local
+	app.unam.local
+	dns.unam.local
+
+----------------------
+
+Paso 1: Configurar la red privada en VirtualBox
+Apaga todas las VMs.
+	Abre VirtualBox > Archivo > Preferencias > Red > Red solo-anfitrión.
+	Crea una red del tipo vboxnet0 (por ejemplo: 192.168.56.0/24).
+	En cada VM (incluyendo esta dns-server), haz esto:
+	Ve a Configuración > Red.
+	Adaptador 1: Red interna o solo-anfitrión (vboxnet0).
+	Asegúrate de que todas las VMs usen la misma red.
+
+Paso 2: Instalar CoreDNS en la VM dns-server
+	Usaremos una instalación directa desde binario (ligera, sin Docker):
+		* sudo apt update
+		* sudo apt install curl unzip -y
+
+# Descargar CoreDNS
+curl -LO https://github.com/coredns/coredns/releases/download/v1.11.2/coredns_1.11.2_linux_amd64.tgz
+
+# Extraer y mover
+	tar -xvzf coredns_1.11.2_linux_amd64.tgz
+	sudo mv coredns /usr/local/bin/
+	Verifica que funcione:
+		* coredns -version
+
+Paso 3: Crear archivo de configuración Corefile
+		* nano Corefile					
+			unam.local {
+				hosts {
+					192.168.56.101 db.unam.local
+					192.168.56.102 app.unam.local
+					192.168.56.103 dns.unam.local
+				}
+				log
+				errors
+			}
+Paso 4: Ejecutar CoreDNS
+Ejecutar el servidor:
+	* sudo coredns -conf Corefile
+	Deberías ver:
+	-----------------------------
+		.:53
+		CoreDNS-1.11.2
+		linux/amd64, go1.21.10
+	-----------------------------	
+	
+Paso 5: Configurar otras VMs para usar dns-server
+	En tus otras VMs (db-server, app-server):
+		Edita /etc/systemd/resolved.conf:
+			* sudo nano /etc/systemd/resolved.conf
+		Cambia o añade:
+			DNS=192.168.56.103   # IP del dns-server
+			Domains=~.
+		Reinicia el servicio:
+			* sudo systemctl restart systemd-resolved
+		Verifica:
+			* resolvectl status
+			* ping db-server.local
